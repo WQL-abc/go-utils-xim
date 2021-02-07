@@ -3,6 +3,9 @@ package xim
 import (
 	"bytes"
 	"fmt"
+	"reflect"
+	"strconv"
+	"time"
 
 	"golang.org/x/xerrors"
 )
@@ -154,4 +157,37 @@ func createCompositeIndexes(labels []string, m indexesMap, forFilters bool) (map
 	}
 
 	return indexes, nil
+}
+
+var timeType = reflect.TypeOf(time.Time{})
+
+func addSomething(v interface{}, label string, indexes interface{}) {
+	x, ok := v.(interface{ add(string, ...string) })
+	if !ok {
+		return
+	}
+
+	rv := reflect.Indirect(reflect.ValueOf(indexes))
+
+	switch rv.Kind() {
+	case reflect.Array, reflect.Slice:
+		for i := 0; i < rv.Len(); i++ {
+			index := rv.Index(i)
+			if !index.CanInterface() {
+				continue
+			}
+			x.add(label, fmt.Sprintf("%v", index.Interface()))
+		}
+	case reflect.Struct:
+		if rv.Type() == timeType {
+			unix := rv.Interface().(time.Time).UnixNano()
+			x.add(label, strconv.FormatInt(unix, 10))
+			break
+		}
+		fallthrough
+	default:
+		if rv.CanInterface() {
+			x.add(label, fmt.Sprintf("%v", rv.Interface()))
+		}
+	}
 }

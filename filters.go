@@ -1,11 +1,7 @@
 package xim
 
 import (
-	"fmt"
-	"reflect"
-	"strconv"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"golang.org/x/xerrors"
@@ -28,8 +24,7 @@ func NewFilters(conf *Config) *Filters {
 	}
 }
 
-// Add - adds new filters with a label.
-func (filters *Filters) Add(label string, indexes ...string) {
+func (filters *Filters) add(label string, indexes ...string) {
 	for _, idx := range indexes {
 		if filters.conf.IgnoreCase {
 			idx = strings.ToLower(idx)
@@ -41,13 +36,17 @@ func (filters *Filters) Add(label string, indexes ...string) {
 
 		filters.m[label][idx] = struct{}{}
 	}
-	return
+}
+
+// Add - adds new filters with a label.
+func (filters *Filters) Add(label string, indexes ...string) *Filters {
+	filters.add(label, indexes...)
+	return filters
 }
 
 // AddBigrams - adds new bigram filters with a label.
 func (filters *Filters) AddBigrams(label string, s string) *Filters {
-	filters.AddBiunigrams(label, s)
-	return filters
+	return filters.AddBiunigrams(label, s)
 }
 
 // AddBiunigrams - adds new biunigram filters with a label.
@@ -63,44 +62,19 @@ func (filters *Filters) AddBiunigrams(label string, s string) *Filters {
 // AddPrefix - adds a new prefix filters with a label.
 func (filters *Filters) AddPrefix(label string, s string) *Filters {
 	// don't need to split prefixes on filters
-	filters.Add(label, s)
-	return filters
+	return filters.Add(label, s)
 }
 
 // AddSuffix - adds a new suffix filters with a label.
 func (filters *Filters) AddSuffix(label string, s string) *Filters {
 	// don't need to split suffixes on filters
-	filters.Add(label, s)
-	return filters
+	return filters.Add(label, s)
 }
 
 // AddSomething - adds new filter with a label.
 // The filters can be a slice or a string convertible value.
 func (filters *Filters) AddSomething(label string, indexes interface{}) *Filters {
-	v := reflect.Indirect(reflect.ValueOf(indexes))
-
-	switch v.Kind() {
-	case reflect.Array, reflect.Slice:
-		for i := 0; i < v.Len(); i++ {
-			index := v.Index(i)
-			if !index.CanInterface() {
-				continue
-			}
-			filters.Add(label, fmt.Sprintf("%v", index.Interface()))
-		}
-	case reflect.Struct:
-		if v.Type() == timeType {
-			unix := v.Interface().(time.Time).UnixNano()
-			filters.Add(label, strconv.FormatInt(unix, 10))
-			break
-		}
-		fallthrough
-	default:
-		if v.CanInterface() {
-			filters.Add(label, fmt.Sprintf("%v", v.Interface()))
-		}
-	}
-
+	addSomething(filters, label, indexes)
 	return filters
 }
 

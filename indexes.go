@@ -1,11 +1,7 @@
 package xim
 
 import (
-	"fmt"
-	"reflect"
-	"strconv"
 	"strings"
-	"time"
 
 	"golang.org/x/xerrors"
 )
@@ -27,8 +23,7 @@ func NewIndexes(conf *Config) *Indexes {
 	}
 }
 
-// Add - adds new indexes with a label.
-func (idxs *Indexes) Add(label string, indexes ...string) {
+func (idxs *Indexes) add(label string, indexes ...string) {
 	for _, idx := range indexes {
 		if idxs.conf.IgnoreCase {
 			idx = strings.ToLower(idx)
@@ -40,60 +35,38 @@ func (idxs *Indexes) Add(label string, indexes ...string) {
 
 		idxs.m[label][idx] = struct{}{}
 	}
-	return
+}
+
+// Add - adds new indexes with a label.
+func (idxs *Indexes) Add(label string, indexes ...string) *Indexes {
+	idxs.add(label, indexes...)
+	return idxs
 }
 
 // AddBigrams - adds new bigram indexes with a label.
 func (idxs *Indexes) AddBigrams(label string, s string) *Indexes {
-	idxs.Add(label, Bigrams(s)...)
-	return idxs
+	return idxs.Add(label, Bigrams(s)...)
 }
 
 // AddBiunigrams - adds new biunigram indexes with a label.
 func (idxs *Indexes) AddBiunigrams(label string, s string) *Indexes {
-	idxs.Add(label, Biunigrams(s)...)
-	return idxs
+	return idxs.Add(label, Biunigrams(s)...)
 }
 
 // AddPrefixes - adds new prefix indexes with a label.
 func (idxs *Indexes) AddPrefixes(label string, s string) *Indexes {
-	idxs.Add(label, Prefixes(s)...)
-	return idxs
+	return idxs.Add(label, Prefixes(s)...)
 }
 
 // AddSuffixes - adds new prefix indexes with a label.
 func (idxs *Indexes) AddSuffixes(label string, s string) *Indexes {
-	idxs.Add(label, Suffixes(s)...)
-	return idxs
+	return idxs.Add(label, Suffixes(s)...)
 }
 
 // AddSomething - adds new indexes with a label.
 // The indexes can be a slice or a string convertible value.
 func (idxs *Indexes) AddSomething(label string, indexes interface{}) *Indexes {
-	v := reflect.Indirect(reflect.ValueOf(indexes))
-
-	switch v.Kind() {
-	case reflect.Array, reflect.Slice:
-		for i := 0; i < v.Len(); i++ {
-			index := v.Index(i)
-			if !index.CanInterface() {
-				continue
-			}
-			idxs.Add(label, fmt.Sprintf("%v", index.Interface()))
-		}
-	case reflect.Struct:
-		if v.Type() == timeType {
-			unix := v.Interface().(time.Time).UnixNano()
-			idxs.Add(label, strconv.FormatInt(unix, 10))
-			break
-		}
-		fallthrough
-	default:
-		if v.CanInterface() {
-			idxs.Add(label, fmt.Sprintf("%v", v.Interface()))
-		}
-	}
-
+	addSomething(idxs, label, indexes)
 	return idxs
 }
 
