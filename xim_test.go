@@ -62,3 +62,87 @@ func TestMustValidateConfig(t *testing.T) {
 		MustValidateConfig(conf)
 	})
 }
+
+func TestAddIndexAndFilter(t *testing.T) {
+	idx := NewIndexes(nil)
+	idx.Add("label1", "abc dあいbCh", "sample")
+
+	filter := NewFilters(nil)
+	filter.Add("label1", "abc dあいbCh", "sample")
+
+	builtIndexes := idx.MustBuild()
+	builtFilters := filter.MustBuild()
+
+	// All the contents of filter are present in index
+	for builtFilter := range builtFilters {
+		if !contains(t, builtIndexes, builtFilter) {
+			t.Errorf("filter: %s not contains", builtFilter)
+		}
+	}
+}
+
+func TestAddBigramsIndexAndFilter(t *testing.T) {
+	idx := NewIndexes(nil)
+	idx.AddBigrams("label1", "abc dあいbCh")
+	builtIndexes := idx.MustBuild()
+
+	filter := NewFilters(nil)
+	filter.AddBigrams("label1", "dあいb") // mid match of idx
+	builtFilters := filter.MustBuild()
+
+	// All the contents of filter are present in index
+	for builtFilter := range builtFilters {
+		if !contains(t, builtIndexes, builtFilter) {
+			t.Errorf("filter: %s not contains", builtFilter)
+		}
+	}
+}
+
+func TestAddBiunigramsIndexAndFilter(t *testing.T) {
+	idx := NewIndexes(nil)
+	idx.AddBiunigrams("label1", "abc dあいbCh")
+	builtIndexes := idx.MustBuild()
+
+	filter := NewFilters(nil)
+	filter.AddBiunigrams("label1", "dあいb") // mid match of idx
+	builtFilters := filter.MustBuild()
+
+	// All the contents of filter are present in index
+	for builtFilter := range builtFilters {
+		if !contains(t, builtIndexes, builtFilter) {
+			t.Errorf("filter: %s not contains", builtFilter)
+		}
+	}
+}
+
+func TestInFilterIndexAndFilter(t *testing.T) {
+	inBuilder := NewInBuilder()
+	status1 := inBuilder.NewBit()
+	status2 := inBuilder.NewBit()
+	status3 := inBuilder.NewBit()
+
+	idx := NewIndexes(nil)
+	idx.Add("label1", inBuilder.Indexes(status1)...)
+	idx.Add("label2", inBuilder.Indexes(status1, status2, status3)...)
+	builtIndexes := idx.MustBuild()
+
+	filter := NewFilters(nil)
+	filter.Add("label1", inBuilder.Filter(status1, status2, status3))
+	filter.Add("label2", inBuilder.Filter(status1))
+	builtFilters := filter.MustBuild()
+
+	// All the contents of filter are present in index
+	for builtFilter := range builtFilters {
+		if !contains(t, builtIndexes, builtFilter) {
+			t.Errorf("filter: %s not contains", builtFilter)
+		}
+	}
+}
+
+func contains(t *testing.T, m map[string]bool, target string) bool {
+	t.Helper()
+	if _, ok := m[target]; ok {
+		return true
+	}
+	return false
+}
