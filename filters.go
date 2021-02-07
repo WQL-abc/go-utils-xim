@@ -72,7 +72,7 @@ func (filters *Filters) AddSuffix(label string, s string) *Filters {
 }
 
 // AddSomething - adds new filter with a label.
-// The filters can be a slice or a string convertible value.
+// The indexes can be a slice or a string convertible value.
 func (filters *Filters) AddSomething(label string, indexes interface{}) *Filters {
 	addSomething(filters, label, indexes)
 	return filters
