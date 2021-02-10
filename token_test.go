@@ -171,15 +171,15 @@ func TestSuffixes(t *testing.T) {
 	sort.Strings(result)
 
 	expected := []string{
+		"Ch",
+		"abc",
+		"bCh",
+		"bc",
 		"c",
-		"cb",
-		"cba",
+		"dあいbCh",
 		"h",
-		"hC",
-		"hCb",
-		"hCbい",
-		"hCbいあ",
-		"hCbいあd",
+		"あいbCh",
+		"いbCh",
 	}
 
 	for i := range result {
