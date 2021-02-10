@@ -73,6 +73,9 @@ func tokenize(s string, isSuffix bool) []string {
 	tokens := make([]string, 0, 32)
 
 	for suf := range tokenMap {
+		if isSuffix {
+			suf = reverse(suf)
+		}
 		tokens = append(tokens, suf)
 	}
 
