@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	IndexNoFilters          = "__NF__" // index to be used for no-filters.
-	MaxIndexesSize          = 512      // maximum size of indexes.
-	MaxCompositeIndexLabels = 8        // maximum number of labels for composite index.
+	IndexNoFilters          = "_NF_" // index to be used for no-filters.
+	MaxIndexesSize          = 512    // maximum size of indexes.
+	MaxCompositeIndexLabels = 8      // maximum number of labels for composite index.
 )
 
 const combinationIndexSeparator = ";"
